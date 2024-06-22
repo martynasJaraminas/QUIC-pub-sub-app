@@ -10,16 +10,21 @@ import (
 	"fmt"
 	"log"
 	"math/big"
+	"os"
 
+	"github.com/lpernett/godotenv"
 	"github.com/quic-go/quic-go"
 )
 
-const (
-	publisherAddr  = "localhost:4444"
-	subscriberAddr = "localhost:5555"
-)
+func init() {
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatalf("Error loading .env file: %v", err)
+	}
+}
 
 func main() {
+
 	ps := NewPubSub()
 
 	go startPublisherServer(ps)
@@ -29,6 +34,7 @@ func main() {
 }
 
 func startPublisherServer(ps *PubSub) {
+	publisherAddr := os.Getenv("LOCAL_HOST") + ":" + os.Getenv("PUBLISHER_PORT")
 	listener, err := quic.ListenAddr(publisherAddr, generateTLSConfig(), nil)
 	if err != nil {
 		log.Fatalf("Failed to start publisher server: %v", err)
@@ -88,6 +94,7 @@ func handlePublisherStream(stream quic.Stream, ps *PubSub) {
 }
 
 func startSubscriberServer(ps *PubSub) {
+	subscriberAddr := os.Getenv("LOCAL_HOST") + ":" + os.Getenv("SUBSCRIBER_PORT")
 	listener, err := quic.ListenAddr(subscriberAddr, generateTLSConfig(), nil)
 	if err != nil {
 		log.Fatalf("Failed to start subscriber server: %v", err)
@@ -111,14 +118,13 @@ func handleSubscriberSession(session quic.Connection, ps *PubSub) {
 	id := session.RemoteAddr().String()
 	ch := ps.Subscribe(id)
 
-	// how to invoke unsubscribe?
-	defer ps.Unsubscribe(id)
-
 	stream, err := session.AcceptStream(context.Background())
 	if err != nil {
 		log.Println("Failed to accept stream:", err)
 		return
 	}
+
+	defer ps.Unsubscribe(id)
 	handleSubscriberStream(stream, ch)
 
 }
@@ -127,6 +133,7 @@ func handleSubscriberStream(stream quic.Stream, ch chan string) {
 	log.Println("New stream opened for subscriber")
 	defer stream.Close()
 	for msg := range ch {
+		log.Println("Sending message to subscriber:", msg)
 		result, err := stream.Write([]byte(msg))
 		if err != nil {
 			log.Println("Failed to write to stream:", err)
