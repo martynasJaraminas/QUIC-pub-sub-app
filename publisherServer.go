@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"os"
 
@@ -16,7 +15,7 @@ func StartPublisherServer(ps *PubSub) {
 		log.Fatalf("Failed to start publisher server: %v", err)
 	}
 
-	fmt.Println("Publisher server started on", publisherAddr)
+	log.Println("Publisher server started on", publisherAddr)
 	for {
 		session, err := listener.Accept(context.Background())
 		if err != nil {
@@ -37,19 +36,8 @@ func handlePublisherSession(session quic.Connection, ps *PubSub) {
 		return
 	}
 
-	go func() {
-		log.Println("handlePublisherStream: Waiting for notifications")
-		for status := range ch {
-			_, err := stream.Write([]byte(status))
-			if err != nil {
-				log.Println("Failed to notify publisher:", err)
-				return
-			}
-		}
-	}()
-
+	go initPublisherNotifications(stream, ch)
 	ps.NotifyPublisherAboutSUbscribers(id)
-
 	go handlePublisherStream(stream, ps, id)
 }
 
@@ -69,5 +57,16 @@ func handlePublisherStream(stream quic.Stream, ps *PubSub, subscriberId string) 
 		msg := string(buf[:n])
 		log.Printf("Publishing message by %s : %s", subscriberId, msg)
 		ps.Publish(msg)
+	}
+}
+
+func initPublisherNotifications(stream quic.Stream, ch chan string) {
+	log.Println("handlePublisherStream: Waiting for notifications")
+	for status := range ch {
+		_, err := stream.Write([]byte(status))
+		if err != nil {
+			log.Println("Failed to notify publisher:", err)
+			return
+		}
 	}
 }

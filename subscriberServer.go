@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"os"
 
@@ -16,7 +15,7 @@ func StartSubscriberServer(ps *PubSub) {
 		log.Fatalf("Failed to start subscriber server: %v", err)
 	}
 
-	fmt.Println("Subscriber server started on", subscriberAddr)
+	log.Println("Subscriber server started on", subscriberAddr)
 
 	for {
 		session, err := listener.Accept(context.Background())
@@ -29,7 +28,7 @@ func StartSubscriberServer(ps *PubSub) {
 }
 
 func handleSubscriberSession(session quic.Connection, ps *PubSub) {
-	fmt.Printf("Subscriber connected from %s\n", session.RemoteAddr().String())
+	log.Printf("Subscriber connected from %s\n", session.RemoteAddr().String())
 
 	id := session.RemoteAddr().String()
 	ch := ps.Subscribe(id)
@@ -56,6 +55,6 @@ func handleSubscriberStream(stream quic.Stream, ch chan string, subscriberId str
 			log.Println("Failed to write to stream:", err)
 			return
 		}
-		fmt.Printf("Sent message to subscriber %s: %s", subscriberId, msg)
+		log.Printf("Sent message to subscriber %s: %s", subscriberId, msg)
 	}
 }
