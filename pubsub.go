@@ -11,6 +11,7 @@ type PubSub struct {
 }
 
 func NewPubSub() *PubSub {
+	// Get the pointer to the PubSub
 	return &PubSub{
 		subscribers: make(map[string]chan string, 1),
 		publishers:  make(map[string]chan string, 1),
