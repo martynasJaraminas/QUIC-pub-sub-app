@@ -13,6 +13,11 @@ To run the clients navigate to folder client/pub or sub and run command `go run 
 * Publisher will publish a message every 10 seconds.
 * Subscriber will log message sent by server.
 
+## Build docker image
+* Run command `docker-compose up` This will start docker container with ports by default 4444 for pub and 5555 for sub or alternately you can build image manually:
+    * Build command `docker build -t quic-pub-sub-app . `
+    * Run command `docker run -d -p 4444:4444/udp -p 5555:5555/udp --name quic-pub-sub-app-container quic-pub-sub-app `
+
 ### TLS cert there just for local testing purposes.
 
 

@@ -1,0 +1,16 @@
+version: '3.8'
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "4444:4444/udp"
+      - "5555:5555/udp"
+    environment:
+      LOCAL_HOST: "0.0.0.0"
+      PUBLISHER_PORT: "4444"
+      SUBSCRIBER_PORT: "5555"
+    volumes:
+      - .:/quic-pub-sub
+    restart: unless-stopped
