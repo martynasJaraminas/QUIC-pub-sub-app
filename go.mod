@@ -5,6 +5,7 @@ go 1.22.4
 require (
 	github.com/go-task/slim-sprig v0.0.0-20230315185526-52ccab3ef572 // indirect
 	github.com/google/pprof v0.0.0-20210407192527-94a9f03dee38 // indirect
+	github.com/lpernett/godotenv v0.0.0-20230527005122-0de1d4c5ef5e // indirect
 	github.com/onsi/ginkgo/v2 v2.9.5 // indirect
 	github.com/quic-go/quic-go v0.45.0 // indirect
 	go.uber.org/mock v0.4.0 // indirect
