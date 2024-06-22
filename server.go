@@ -46,32 +46,24 @@ func startPublisherServer(ps *PubSub) {
 		if err != nil {
 			log.Println("Failed to accept session:", err)
 		}
-		go handlePublisherSession(session, ps)
+		handlePublisherSession(session, ps)
 	}
 }
 
 func handlePublisherSession(session quic.Connection, ps *PubSub) {
 	log.Println("Accepted session")
+	id := session.RemoteAddr().String()
+	ch := ps.AddPublisher(id)
 
 	stream, err := session.AcceptStream(context.Background())
 	if err != nil {
 		log.Println("Failed to accept stream:", err)
 		return
 	}
-	handlePublisherStream(stream, ps)
-
-}
-
-func handlePublisherStream(stream quic.Stream, ps *PubSub) {
-	log.Println("handlePublisherStream: New stream opened")
-	defer stream.Close()
-
-	notify := ps.PublisherNotifyChannel()
-	buf := make([]byte, 1024)
 
 	go func() {
 		log.Println("handlePublisherStream: Waiting for notifications")
-		for status := range notify {
+		for status := range ch {
 			_, err := stream.Write([]byte(status))
 			if err != nil {
 				log.Println("Failed to notify publisher:", err)
@@ -79,6 +71,17 @@ func handlePublisherStream(stream quic.Stream, ps *PubSub) {
 			}
 		}
 	}()
+
+	ps.NotifyPublisherAboutSUbscribers(id)
+
+	go handlePublisherStream(stream, ps, id)
+}
+
+func handlePublisherStream(stream quic.Stream, ps *PubSub, subscriberId string) {
+	log.Println("New stream opened for publisher")
+	defer stream.Close()
+
+	buf := make([]byte, 1024)
 
 	for {
 		n, err := stream.Read(buf)
@@ -88,7 +91,7 @@ func handlePublisherStream(stream quic.Stream, ps *PubSub) {
 		}
 
 		msg := string(buf[:n])
-		fmt.Println("Publishing message:", msg)
+		log.Printf("Publishing message by %s : %s", subscriberId, msg)
 		ps.Publish(msg)
 	}
 }
@@ -125,21 +128,22 @@ func handleSubscriberSession(session quic.Connection, ps *PubSub) {
 	}
 
 	defer ps.Unsubscribe(id)
-	handleSubscriberStream(stream, ch)
+	handleSubscriberStream(stream, ch, id)
 
 }
 
-func handleSubscriberStream(stream quic.Stream, ch chan string) {
+func handleSubscriberStream(stream quic.Stream, ch chan string, subscriberId string) {
 	log.Println("New stream opened for subscriber")
 	defer stream.Close()
 	for msg := range ch {
-		log.Println("Sending message to subscriber:", msg)
-		result, err := stream.Write([]byte(msg))
+		_, err := stream.Write([]byte(msg))
+		// TODO: error is only invoked on timeout: no recent network activity
+		// Can i make this fail faster?
 		if err != nil {
 			log.Println("Failed to write to stream:", err)
 			return
 		}
-		fmt.Println("Sent message to subscriber:", result)
+		fmt.Printf("Sent message to subscriber %s: %s", subscriberId, msg)
 	}
 }
 
