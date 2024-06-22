@@ -1,6 +1,7 @@
 # Use the official Go image as the base image
 FROM golang:1.22
 
+# Does not work with 127.0.0.1!
 ENV LOCAL_HOST=0.0.0.0
 
 # Set the working directory inside the container
