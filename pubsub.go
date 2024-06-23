@@ -13,8 +13,8 @@ type PubSub struct {
 func NewPubSub() *PubSub {
 	// Get the pointer to the PubSub
 	return &PubSub{
-		subscribers: make(map[string]chan string, 1),
-		publishers:  make(map[string]chan string, 1),
+		subscribers: make(map[string]chan string, 0),
+		publishers:  make(map[string]chan string, 0),
 	}
 }
 
@@ -23,7 +23,7 @@ func (ps *PubSub) Subscribe(id string) chan string {
 	ps.mu.Lock()
 	defer ps.mu.Unlock()
 
-	ch := make(chan string, 1)
+	ch := make(chan string)
 	ps.subscribers[id] = ch
 	ps.notifyAllPublishers("New subscriber connected")
 	return ch
@@ -46,9 +46,19 @@ func (ps *PubSub) Unsubscribe(id string) {
 func (ps *PubSub) AddPublisher(id string) chan string {
 	ps.mu.Lock()
 	defer ps.mu.Unlock()
-	ch := make(chan string, 1)
+	ch := make(chan string)
 	ps.publishers[id] = ch
 	return ch
+}
+
+func (ps *PubSub) RemovePublisher(id string) {
+	ps.mu.Lock()
+	defer ps.mu.Unlock()
+
+	if ch, ok := ps.publishers[id]; ok {
+		close(ch)
+		delete(ps.publishers, id)
+	}
 }
 
 func (ps *PubSub) Publish(msg string) {

@@ -39,14 +39,16 @@ func handleSubscriberSession(session quic.Connection, ps *PubSub) {
 		return
 	}
 
-	defer ps.Unsubscribe(id)
+	defer func() {
+		stream.Close()
+		ps.Unsubscribe(id)
+	}()
 	handleSubscriberStream(stream, ch, id)
 
 }
 
 func handleSubscriberStream(stream quic.Stream, ch chan string, subscriberId string) {
 	log.Println("New stream opened for subscriber")
-	defer stream.Close()
 	for msg := range ch {
 		_, err := stream.Write([]byte(msg))
 		// TODO: error is only invoked on timeout: no recent network activity

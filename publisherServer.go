@@ -43,7 +43,10 @@ func handlePublisherSession(session quic.Connection, ps *PubSub) {
 
 func handlePublisherStream(stream quic.Stream, ps *PubSub, subscriberId string) {
 	log.Println("New stream opened for publisher")
-	defer stream.Close()
+	defer func() {
+		stream.Close()
+		ps.RemovePublisher(subscriberId)
+	}()
 
 	buf := make([]byte, 1024)
 
