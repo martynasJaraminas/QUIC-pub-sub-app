@@ -39,6 +39,8 @@ func handlePublisherSession(session quic.Connection, ps *pubsub.PubSubClient) {
 	}
 
 	go initPublisherNotifications(stream, ch)
+	go handleSessionDrop(session.Context(), session, stream, ps, id)
+
 	ps.NotifyPublisherAboutSUbscribers(id)
 	go handlePublisherStream(stream, ps, id)
 }

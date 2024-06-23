@@ -41,24 +41,30 @@ func handleSubscriberSession(session quic.Connection, ps *pubsub.PubSubClient) {
 		return
 	}
 
-	defer func() {
-		stream.Close()
-		ps.Unsubscribe(id)
-	}()
+	go handleSessionDrop(session.Context(), session, stream, ps, id)
+
+	defer ps.Unsubscribe(id)
 	handleSubscriberStream(stream, ch, id)
 
 }
 
 func handleSubscriberStream(stream quic.Stream, ch chan string, subscriberId string) {
 	log.Println("New stream opened for subscriber")
+	defer stream.Close()
+
 	for msg := range ch {
 		_, err := stream.Write([]byte(msg))
-		// TODO: error is only invoked on timeout: no recent network activity
-		// Can i make this fail faster?
 		if err != nil {
 			log.Println("Failed to write to stream:", err)
 			return
 		}
 		log.Printf("Sent message to subscriber %s: %s", subscriberId, msg)
 	}
+}
+
+func handleSessionDrop(ctx context.Context, session quic.Connection, stream quic.Stream, ps *pubsub.PubSubClient, id string) {
+	<-ctx.Done()
+	log.Printf("Session closed from %s\n", session.RemoteAddr().String())
+	stream.Close()
+	ps.Unsubscribe(id)
 }
