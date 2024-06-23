@@ -5,10 +5,12 @@ import (
 	"log"
 	"os"
 
+	"quic-pub-sub-app/pubsub"
+
 	"github.com/quic-go/quic-go"
 )
 
-func StartSubscriberServer(ps *PubSub) {
+func StartSubscriberServer(ps *pubsub.PubSubClient) {
 	subscriberAddr := os.Getenv("LOCAL_HOST") + ":" + os.Getenv("SUBSCRIBER_PORT")
 	listener, err := quic.ListenAddr(subscriberAddr, GenerateTLSConfig(), nil)
 	if err != nil {
@@ -27,7 +29,7 @@ func StartSubscriberServer(ps *PubSub) {
 	}
 }
 
-func handleSubscriberSession(session quic.Connection, ps *PubSub) {
+func handleSubscriberSession(session quic.Connection, ps *pubsub.PubSubClient) {
 	log.Printf("Subscriber connected from %s\n", session.RemoteAddr().String())
 
 	id := session.RemoteAddr().String()

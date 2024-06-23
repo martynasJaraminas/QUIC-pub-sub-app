@@ -5,10 +5,12 @@ import (
 	"log"
 	"os"
 
+	"quic-pub-sub-app/pubsub"
+
 	"github.com/quic-go/quic-go"
 )
 
-func StartPublisherServer(ps *PubSub) {
+func StartPublisherServer(ps *pubsub.PubSubClient) {
 	publisherAddr := os.Getenv("LOCAL_HOST") + ":" + os.Getenv("PUBLISHER_PORT")
 	listener, err := quic.ListenAddr(publisherAddr, GenerateTLSConfig(), nil)
 	if err != nil {
@@ -25,7 +27,7 @@ func StartPublisherServer(ps *PubSub) {
 	}
 }
 
-func handlePublisherSession(session quic.Connection, ps *PubSub) {
+func handlePublisherSession(session quic.Connection, ps *pubsub.PubSubClient) {
 	log.Println("Accepted session")
 	id := session.RemoteAddr().String()
 	ch := ps.AddPublisher(id)
@@ -41,7 +43,7 @@ func handlePublisherSession(session quic.Connection, ps *PubSub) {
 	go handlePublisherStream(stream, ps, id)
 }
 
-func handlePublisherStream(stream quic.Stream, ps *PubSub, subscriberId string) {
+func handlePublisherStream(stream quic.Stream, ps *pubsub.PubSubClient, subscriberId string) {
 	log.Println("New stream opened for publisher")
 	defer func() {
 		stream.Close()
@@ -59,7 +61,7 @@ func handlePublisherStream(stream quic.Stream, ps *PubSub, subscriberId string) 
 
 		msg := string(buf[:n])
 		log.Printf("Publishing message by %s : %s", subscriberId, msg)
-		ps.Publish(msg)
+		ps.PublishMessageForAllSubscribers(msg)
 	}
 }
 

@@ -3,6 +3,8 @@ package main
 import (
 	"log"
 
+	"quic-pub-sub-app/pubsub"
+
 	"github.com/lpernett/godotenv"
 )
 
@@ -15,7 +17,7 @@ func init() {
 
 func main() {
 
-	ps := NewPubSub()
+	ps := pubsub.NewPubSub()
 
 	go StartPublisherServer(ps)
 	go StartSubscriberServer(ps)
