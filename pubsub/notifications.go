@@ -1,5 +1,10 @@
 package pubsub
 
+const (
+	NoSubscribers        = "No subscribers connected"
+	HasActiveSubscribers = "Server has active subscribers"
+)
+
 // Notifications for publishers
 
 func (ps *PubSubClient) notifyAllPublishers(msg string) {
@@ -10,9 +15,9 @@ func (ps *PubSubClient) notifyAllPublishers(msg string) {
 
 func (ps *PubSubClient) NotifyPublisherAboutSUbscribers(id string) {
 	if ch, ok := ps.publishers[id]; ok && len(ps.subscribers) == 0 {
-		ch <- "No subscribers connected"
+		ch <- NoSubscribers
 	} else {
-		ch <- "Server has active subscribers"
+		ch <- HasActiveSubscribers
 
 	}
 }

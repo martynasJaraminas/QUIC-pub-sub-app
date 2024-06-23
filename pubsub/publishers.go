@@ -7,7 +7,8 @@ import "log"
 func (ps *PubSubClient) AddPublisher(id string) chan string {
 	ps.mu.Lock()
 	defer ps.mu.Unlock()
-	ch := make(chan string)
+	// if channel is created with size of 0, unit test hangs
+	ch := make(chan string, 1)
 	ps.publishers[id] = ch
 	return ch
 }

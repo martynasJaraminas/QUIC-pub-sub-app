@@ -2,16 +2,21 @@ package pubsub
 
 import "log"
 
+const (
+	NewSubscriberConnected = "New subscriber connected"
+	NoSubscribersConnected = "No subscribers connected"
+)
+
 // Subscribers methods
 
 func (ps *PubSubClient) Subscribe(id string) chan string {
 	// lock ensures that only this goroutine access the map at a time
 	ps.mu.Lock()
 	defer ps.mu.Unlock()
-
-	ch := make(chan string)
+	// if channel is created with size of 0, unit test hangs
+	ch := make(chan string, 1)
 	ps.subscribers[id] = ch
-	ps.notifyAllPublishers("New subscriber connected")
+	ps.notifyAllPublishers(NewSubscriberConnected)
 	return ch
 }
 
@@ -27,6 +32,6 @@ func (ps *PubSubClient) Unsubscribe(id string) {
 	}
 
 	if len(ps.subscribers) == 0 {
-		ps.notifyAllPublishers("No subscribers connected")
+		ps.notifyAllPublishers(NoSubscribersConnected)
 	}
 }

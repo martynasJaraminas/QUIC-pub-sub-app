@@ -17,7 +17,7 @@ func init() {
 
 func main() {
 
-	ps := pubsub.NewPubSub()
+	ps := pubsub.NewPubSubClient()
 
 	go StartPublisherServer(ps)
 	go StartSubscriberServer(ps)

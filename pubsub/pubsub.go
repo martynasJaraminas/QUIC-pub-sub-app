@@ -10,7 +10,7 @@ type PubSubClient struct {
 	mu          sync.RWMutex
 }
 
-func NewPubSub() *PubSubClient {
+func NewPubSubClient() *PubSubClient {
 	// Get the pointer to the PubSub
 	return &PubSubClient{
 		subscribers: make(map[string]chan string, 0),
