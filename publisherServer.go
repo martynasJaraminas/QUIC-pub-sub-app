@@ -32,28 +32,32 @@ func handlePublisherSession(session quic.Connection, ps *pubsub.PubSubClient) {
 	id := session.RemoteAddr().String()
 	ch := ps.AddPublisher(id)
 
-	stream, err := session.AcceptStream(context.Background())
-	if err != nil {
-		log.Println("Failed to accept stream:", err)
-		return
+	context.AfterFunc(session.Context(), func() {
+		// Does not detect session drop only time expiration
+		log.Printf("Publisher Session %s expired", id)
+		ps.RemovePublisher(id)
+	})
+
+	// In case 1 connection will open multiple streams
+	for {
+		stream, err := session.AcceptStream(context.Background())
+		if err != nil {
+			log.Println("Failed to accept stream:", err)
+			return
+		}
+		go initPublisherNotifications(stream, ch)
+		ps.NotifyPublisherAboutSUbscribers(id)
+
+		defer stream.Close()
+		go handlePublisherStream(stream, ps, id)
 	}
 
-	go initPublisherNotifications(stream, ch)
-	go handleSessionDrop(session.Context(), session, stream, ps, id)
-
-	ps.NotifyPublisherAboutSUbscribers(id)
-	go handlePublisherStream(stream, ps, id)
 }
 
 func handlePublisherStream(stream quic.Stream, ps *pubsub.PubSubClient, subscriberId string) {
-	log.Println("New stream opened for publisher")
-	defer func() {
-		stream.Close()
-		ps.RemovePublisher(subscriberId)
-	}()
+	log.Printf("New stream opened for publisher %s", subscriberId)
 
 	buf := make([]byte, 1024)
-
 	for {
 		n, err := stream.Read(buf)
 		if err != nil {
@@ -68,7 +72,6 @@ func handlePublisherStream(stream quic.Stream, ps *pubsub.PubSubClient, subscrib
 }
 
 func initPublisherNotifications(stream quic.Stream, ch chan string) {
-	log.Println("handlePublisherStream: Waiting for notifications")
 	for status := range ch {
 		_, err := stream.Write([]byte(status))
 		if err != nil {

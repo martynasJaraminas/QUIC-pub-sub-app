@@ -33,24 +33,29 @@ func handleSubscriberSession(session quic.Connection, ps *pubsub.PubSubClient) {
 	log.Printf("Subscriber connected from %s\n", session.RemoteAddr().String())
 
 	id := session.RemoteAddr().String()
-	ch := ps.Subscribe(id)
+	ch := ps.AddSubscriber(id)
 
-	stream, err := session.AcceptStream(context.Background())
-	if err != nil {
-		log.Println("Failed to accept stream:", err)
-		return
+	context.AfterFunc(session.Context(), func() {
+		// Does not detect session drop only time expiration
+		log.Printf("Subscriber session %s expired", id)
+		ps.RemoveSubscriber(id)
+	})
+
+	// If connection is not dropped but opened another stream
+	for {
+		stream, err := session.AcceptStream(context.Background())
+		if err != nil {
+			log.Println("Failed to accept stream:", err)
+			return
+		}
+
+		defer stream.Close()
+		go handleSubscriberStream(stream, ch, id)
 	}
-
-	go handleSessionDrop(session.Context(), session, stream, ps, id)
-
-	defer ps.Unsubscribe(id)
-	handleSubscriberStream(stream, ch, id)
-
 }
 
 func handleSubscriberStream(stream quic.Stream, ch chan string, subscriberId string) {
-	log.Println("New stream opened for subscriber")
-	defer stream.Close()
+	log.Printf("New stream opened for subscriber %s", subscriberId)
 
 	for msg := range ch {
 		_, err := stream.Write([]byte(msg))
@@ -60,11 +65,4 @@ func handleSubscriberStream(stream quic.Stream, ch chan string, subscriberId str
 		}
 		log.Printf("Sent message to subscriber %s: %s", subscriberId, msg)
 	}
-}
-
-func handleSessionDrop(ctx context.Context, session quic.Connection, stream quic.Stream, ps *pubsub.PubSubClient, id string) {
-	<-ctx.Done()
-	log.Printf("Session closed from %s\n", session.RemoteAddr().String())
-	stream.Close()
-	ps.Unsubscribe(id)
 }
