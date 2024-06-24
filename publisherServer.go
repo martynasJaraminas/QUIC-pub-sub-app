@@ -23,7 +23,7 @@ func StartPublisherServer(ps *pubsub.PubSubClient) {
 		if err != nil {
 			log.Println("Failed to accept session:", err)
 		}
-		handlePublisherSession(session, ps)
+		go handlePublisherSession(session, ps)
 	}
 }
 
@@ -38,7 +38,7 @@ func handlePublisherSession(session quic.Connection, ps *pubsub.PubSubClient) {
 		ps.RemovePublisher(id)
 	})
 
-	// In case 1 connection will open multiple streams
+	// In case 1 connection drops and opens stream
 	for {
 		stream, err := session.AcceptStream(context.Background())
 		if err != nil {
