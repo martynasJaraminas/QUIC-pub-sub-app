@@ -6,7 +6,7 @@ import (
 
 func TestPubSUb_PublishMessageForAllSubscribers(t *testing.T) {
 	ps := NewPubSubClient()
-	subscriber_cn := ps.Subscribe(Subscriber1)
+	subscriber_cn := ps.AddSubscriber(Subscriber1)
 
 	ps.AddPublisher(Publisher1)
 

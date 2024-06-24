@@ -7,7 +7,7 @@ Messaging broker app which accepts publishes and subscribers by UDP ports (ports
 * In root directory run command `go run *.go`
 
 ## Testing by running clients
-In clients folder there is publisher and subscriber files which can be used for testing server.(Please note clients created for testing purposes only, so they are just as good as)
+In clients folder there is publisher and subscriber files which can be used for testing server.(Please note clients created for testing purposes only, so they are just as good as is)
 To run the clients navigate to folder client/pub or sub and run command `go run *.go`
 
 * Publisher will publish a message every 10 seconds.

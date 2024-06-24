@@ -9,7 +9,7 @@ const Subscriber1 = "subscriber1"
 func TestPubSub_Subscribe(t *testing.T) {
 	ps := NewPubSubClient()
 	publisher_ch := ps.AddPublisher(Publisher1)
-	ch := ps.Subscribe(Subscriber1)
+	ch := ps.AddSubscriber(Subscriber1)
 	if ch == nil {
 		t.Fatal("expected channel, got nil")
 	}
@@ -24,7 +24,7 @@ func TestPubSub_Unsubscribe(t *testing.T) {
 
 	publisher_cn := ps.AddPublisher(Publisher1)
 
-	ps.Unsubscribe(Subscriber1)
+	ps.RemoveSubscriber(Subscriber1)
 
 	if msg := <-publisher_cn; msg != NoSubscribersConnected {
 		t.Fatalf("Expected '%s', got '%s'", NoSubscribersConnected, msg)

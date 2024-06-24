@@ -18,7 +18,7 @@ func TestPubSub_NotifyPublisherAboutSUbscribers_NoSubscribers(t *testing.T) {
 }
 func TestPubSub_NotifyPublisherAboutSUbscribers_HasActive(t *testing.T) {
 	ps := NewPubSubClient()
-	ps.Subscribe(Subscriber1)
+	ps.AddSubscriber(Subscriber1)
 
 	ch_pub_1 := ps.AddPublisher(Publisher1)
 
